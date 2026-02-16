@@ -13,4 +13,24 @@ export default defineConfig({
       { find: "@presentation", replacement: path.resolve(__dirname, "src/presentation") },
     ],
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: (id) => {
+          if (id.includes("node_modules")) {
+            if (id.includes("@mui") || id.includes("@emotion")) {
+              return "vendor_mui";
+            }
+            if (id.includes("recharts") || id.includes("d3")) {
+              return "vendor_charts";
+            }
+            if (id.includes("framer-motion")) {
+              return "vendor_motion";
+            }
+            return "vendor";
+          }
+        },
+      },
+    },
+  },
 });
