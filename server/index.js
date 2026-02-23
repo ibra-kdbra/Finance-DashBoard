@@ -8,6 +8,9 @@ import morgan from "morgan";
 import kpiRoutes from './src/presentation/routes/kpi.route.js';
 import productRoutes from './src/presentation/routes/product.route.js';
 import transactionRoutes from './src/presentation/routes/transaction.route.js';
+import authRoutes from "./src/presentation/routes/auth.route.js";
+import ingestionRoutes from "./src/presentation/routes/ingestion.route.js";
+import { verifyToken } from "./src/data/middleware/auth.middleware.js";
 import Product from './src/data/models/Product.js';
 import KPI from "./src/data/models/KPI.js";
 import Transaction from "./src/data/models/Transactions.js";
@@ -25,9 +28,11 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cors());
 
 /* ROUTES */
-app.use("/kpi", kpiRoutes);
-app.use("/product", productRoutes);
-app.use("/transaction", transactionRoutes)
+app.use("/auth", authRoutes);
+app.use("/kpi", verifyToken, kpiRoutes);
+app.use("/product", verifyToken, productRoutes);
+app.use("/transaction", verifyToken, transactionRoutes);
+app.use("/ingest", ingestionRoutes);
 
 /* MONOGOOSE SETUP */
 const PORT = process.env.PORT || 9000;

@@ -3,12 +3,16 @@ import { Link } from "react-router-dom";
 import PixIcon from "@mui/icons-material/Pix";
 import { Box, Typography, useTheme } from "@mui/material";
 import FlexBetween from "@/presentation/components/FlexBetween";
+import { useDispatch, useSelector } from "react-redux";
+import { setLogout } from "@/data/state/authSlice";
 
 type Props = Record<string, never>;
 
 const Navbar = (props: Props) => {
   const { palette } = useTheme();
+  const dispatch = useDispatch();
   const [selected, setSelected] = useState("dashboard");
+  const isAuth = Boolean(useSelector((state: any) => state.auth.token));
   return (
     <FlexBetween
       mb="0.25rem"
@@ -45,40 +49,77 @@ const Navbar = (props: Props) => {
 
       {/* RIGHT SIDE */}
       <FlexBetween gap="2rem">
-        <Box sx={{ 
-          transition: "all 0.3s ease",
-          "&:hover": { transform: "translateY(-2px)" }
-        }}>
-          <Link
-            to="/"
-            onClick={() => setSelected("dashboard")}
-            style={{
-              color: selected === "dashboard" ? (palette as any).primary[500] : palette.grey[700],
-              textDecoration: "none",
-              fontWeight: "600",
-              transition: "color 0.3s ease"
-            }}
-          >
-            dashboard
-          </Link>
-        </Box>
-        <Box sx={{ 
-          transition: "all 0.3s ease",
-          "&:hover": { transform: "translateY(-2px)" }
-        }}>
-          <Link
-            to="/predictions"
-            onClick={() => setSelected("predictions")}
-            style={{
-              color: selected === "predictions" ? (palette as any).primary[500] : palette.grey[700],
-              textDecoration: "none",
-              fontWeight: "600",
-              transition: "color 0.3s ease"
-            }}
-          >
-            predictions
-          </Link>
-        </Box>
+        {isAuth && (
+          <>
+            <Box sx={{ 
+              transition: "all 0.3s ease",
+              "&:hover": { transform: "translateY(-2px)" }
+            }}>
+              <Link
+                to="/"
+                onClick={() => setSelected("dashboard")}
+                style={{
+                  color: selected === "dashboard" ? (palette as any).primary[500] : palette.grey[700],
+                  textDecoration: "none",
+                  fontWeight: "600",
+                  transition: "color 0.3s ease"
+                }}
+              >
+                dashboard
+              </Link>
+            </Box>
+            <Box sx={{ 
+              transition: "all 0.3s ease",
+              "&:hover": { transform: "translateY(-2px)" }
+            }}>
+              <Link
+                to="/predictions"
+                onClick={() => setSelected("predictions")}
+                style={{
+                  color: selected === "predictions" ? (palette as any).primary[500] : palette.grey[700],
+                  textDecoration: "none",
+                  fontWeight: "600",
+                  transition: "color 0.3s ease"
+                }}
+              >
+                predictions
+              </Link>
+            </Box>
+            <Box sx={{ 
+              transition: "all 0.3s ease",
+              "&:hover": { transform: "translateY(-2px)" }
+            }}>
+              <Link
+                to="/data"
+                onClick={() => setSelected("data")}
+                style={{
+                  color: selected === "data" ? (palette as any).primary[500] : palette.grey[700],
+                  textDecoration: "none",
+                  fontWeight: "600",
+                  transition: "color 0.3s ease"
+                }}
+              >
+                data
+              </Link>
+            </Box>
+            <Box sx={{ 
+              transition: "all 0.3s ease",
+              "&:hover": { transform: "translateY(-2px)", cursor: "pointer", color: (palette as any).primary[500] }
+            }}>
+              <Typography
+                onClick={() => dispatch(setLogout())}
+                style={{
+                  color: palette.grey[700],
+                  textDecoration: "none",
+                  fontWeight: "600",
+                  transition: "color 0.3s ease"
+                }}
+              >
+                logout
+              </Typography>
+            </Box>
+          </>
+        )}
       </FlexBetween>
     </FlexBetween>
   );
