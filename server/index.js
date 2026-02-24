@@ -1,6 +1,5 @@
 import express from "express";
 import bodyParser from "body-parser";
-import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
 import helmet from "helmet";
@@ -11,10 +10,7 @@ import transactionRoutes from './src/presentation/routes/transaction.route.js';
 import authRoutes from "./src/presentation/routes/auth.route.js";
 import ingestionRoutes from "./src/presentation/routes/ingestion.route.js";
 import { verifyToken } from "./src/data/middleware/auth.middleware.js";
-import Product from './src/data/models/Product.js';
-import KPI from "./src/data/models/KPI.js";
-import Transaction from "./src/data/models/Transactions.js";
-import { kpis, products, transactions } from "./data/data.js"
+import prisma from "./src/data/prisma.js";
 
 /* CONFIGURATIONS */
 dotenv.config();
@@ -34,20 +30,20 @@ app.use("/product", verifyToken, productRoutes);
 app.use("/transaction", verifyToken, transactionRoutes);
 app.use("/ingest", ingestionRoutes);
 
-/* MONOGOOSE SETUP */
-const PORT = process.env.PORT || 9000;
-mongoose
-  .connect(process.env.MONGO_URL, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(async () => {
+/* PRISMA SETUP */
+const PORT = process.env.PORT || 1337;
+async function main() {
+  try {
     app.listen(PORT, () => console.log(`Server Port: ${PORT}`));
+  } catch (error) {
+    console.log(`${error} did not connect`);
+  }
+}
 
-    /* ADD DATA ONE TIME ONLY OR AS NEEDED */
-    //  await mongoose.connection.db.dropDatabase();
-    //  KPI.insertMany(kpis);
-    //  Product.insertMany(products);
-    //  Transaction.insertMany(transactions);
+main()
+  .catch((e) => {
+    throw e;
   })
-  .catch((error) => console.log(`${error} did not connect`));
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
