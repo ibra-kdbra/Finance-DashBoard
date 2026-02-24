@@ -1,8 +1,13 @@
-import KPI from "../../data/models/KPI.js";
-import Product from "../../data/models/Product.js";
-import Transaction from "../../data/models/Transactions.js";
+import prisma from "../../data/prisma.js";
 import csv from "csv-parser";
 import fs from "fs";
+
+// Helper to clean currency strings from CSV (e.g., "$1,234.56" -> 1234.56)
+const cleanCurrency = (val) => {
+    if (!val) return 0;
+    if (typeof val === "number") return val;
+    return parseFloat(val.replace(/[$,]/g, ""));
+};
 
 export const ingestCSV = async (req, res) => {
     try {
@@ -16,13 +21,29 @@ export const ingestCSV = async (req, res) => {
             .on("end", async () => {
                 try {
                     if (type === "kpi") {
-                        // Bulk insert/update KPIs
-                        // Note: In a real production scenario, we would validate & transform here
-                        await KPI.insertMany(results);
+                        for (const row of results) {
+                            await prisma.kPI.create({
+                                data: {
+                                    totalProfit: cleanCurrency(row.totalProfit),
+                                    totalRevenue: cleanCurrency(row.totalRevenue),
+                                    totalExpenses: cleanCurrency(row.totalExpenses),
+                                    expensesByCategory: row.expensesByCategory ? JSON.parse(row.expensesByCategory) : {},
+                                    // Relational nested data would be handled here if available in CSV
+                                },
+                            });
+                        }
                     } else if (type === "product") {
-                        await Product.insertMany(results);
+                        const data = results.map((row) => ({
+                            price: cleanCurrency(row.price),
+                            expense: cleanCurrency(row.expense),
+                        }));
+                        await prisma.product.createMany({ data });
                     } else if (type === "transaction") {
-                        await Transaction.insertMany(results);
+                        const data = results.map((row) => ({
+                            buyer: row.buyer,
+                            amount: cleanCurrency(row.amount),
+                        }));
+                        await prisma.transaction.createMany({ data });
                     }
 
                     // Clean up the temporary file
