@@ -1,0 +1,4 @@
+totalProfit,totalRevenue,totalExpenses,expensesByCategory
+150000,250000,100000,"{""salaries"":30000,""rent"":20000,""marketing"":50000}"
+165000,280000,115000,"{""salaries"":32000,""rent"":20000,""marketing"":63000}"
+180000,310000,130000,"{""salaries"":35000,""rent"":22000,""marketing"":73000}"
