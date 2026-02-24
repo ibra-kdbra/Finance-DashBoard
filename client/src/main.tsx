@@ -17,8 +17,12 @@ export const store = configureStore({
 });
 setupListeners(store.dispatch);
 
+import { BrowserRouter } from "react-router-dom";
+
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <Provider store={store}>
-    <App />
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
   </Provider>
 );
