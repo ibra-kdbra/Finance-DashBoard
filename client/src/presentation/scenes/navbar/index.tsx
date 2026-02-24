@@ -1,17 +1,22 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import PixIcon from "@mui/icons-material/Pix";
-import { Box, Typography, useTheme } from "@mui/material";
+import { Box, Typography, useTheme, Divider } from "@mui/material";
 import FlexBetween from "@/presentation/components/FlexBetween";
 import { useDispatch, useSelector } from "react-redux";
 import { setLogout } from "@/data/state/authSlice";
+import SmartToyIcon from "@mui/icons-material/SmartToy";
+import LogoutIcon from "@mui/icons-material/Logout";
+import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import DataImportModal from "@/presentation/components/DataImportModal";
 
-type Props = Record<string, never>;
 
-const Navbar = (props: Props) => {
+
+const Navbar = () => {
   const { palette } = useTheme();
   const dispatch = useDispatch();
   const [selected, setSelected] = useState("dashboard");
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const isAuth = Boolean(useSelector((state: any) => state.auth.token));
   return (
     <FlexBetween
@@ -56,7 +61,7 @@ const Navbar = (props: Props) => {
               "&:hover": { transform: "translateY(-2px)" }
             }}>
               <Link
-                to="/"
+                to="/dashboard"
                 onClick={() => setSelected("dashboard")}
                 style={{
                   color: selected === "dashboard" ? (palette as any).primary[500] : palette.grey[700],
@@ -87,32 +92,58 @@ const Navbar = (props: Props) => {
             </Box>
             <Box sx={{ 
               transition: "all 0.3s ease",
-              "&:hover": { transform: "translateY(-2px)" }
-            }}>
-              <Link
-                to="/data"
-                onClick={() => setSelected("data")}
-                style={{
-                  color: selected === "data" ? (palette as any).primary[500] : palette.grey[700],
-                  textDecoration: "none",
-                  fontWeight: "600",
-                  transition: "color 0.3s ease"
-                }}
-              >
-                data
-              </Link>
+              "&:hover": { transform: "translateY(-2px)", cursor: "pointer" }
+            }} onClick={() => setIsModalOpen(true)}>
+              <Box display="flex" alignItems="center" gap="0.4rem">
+                <CloudUploadIcon sx={{ fontSize: "18px", color: palette.grey[700] }} />
+                <Typography
+                  style={{
+                    color: palette.grey[700],
+                    textDecoration: "none",
+                    fontWeight: "600",
+                  }}
+                >
+                  import
+                </Typography>
+              </Box>
             </Box>
+
+            <Divider orientation="vertical" flexItem sx={{ borderColor: palette.grey[800], mx: "0.25rem" }} />
+
             <Box sx={{ 
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              background: "rgba(129, 138, 248, 0.1)",
+              p: "0.4rem 1rem",
+              borderRadius: "2rem",
+              border: `1px solid rgba(129, 138, 248, 0.2)`,
               transition: "all 0.3s ease",
-              "&:hover": { transform: "translateY(-2px)", cursor: "pointer", color: (palette as any).primary[500] }
+              cursor: "pointer",
+              "&:hover": { 
+                background: "rgba(129, 138, 248, 0.2)",
+                boxShadow: `0 0 15px rgba(129, 138, 248, 0.3)`
+              }
             }}>
+              <SmartToyIcon sx={{ fontSize: "18px", color: (palette as any).primary[500] }} />
+              <Typography variant="h6" color={(palette as any).primary[500]} fontWeight="700">
+                AURA AI
+              </Typography>
+            </Box>
+
+            <Box sx={{ 
+              ml: "1rem",
+              transition: "all 0.3s ease",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.4rem",
+              "&:hover": { cursor: "pointer", color: (palette as any).tertiary[500] }
+            }} onClick={() => dispatch(setLogout())}>
+              <LogoutIcon sx={{ fontSize: "18px", color: palette.grey[700] }} />
               <Typography
-                onClick={() => dispatch(setLogout())}
                 style={{
                   color: palette.grey[700],
-                  textDecoration: "none",
                   fontWeight: "600",
-                  transition: "color 0.3s ease"
                 }}
               >
                 logout
@@ -121,6 +152,7 @@ const Navbar = (props: Props) => {
           </>
         )}
       </FlexBetween>
+      <DataImportModal open={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </FlexBetween>
   );
 };
