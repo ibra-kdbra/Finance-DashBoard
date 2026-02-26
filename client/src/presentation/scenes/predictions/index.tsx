@@ -272,7 +272,7 @@ const Predictions = () => {
                     translateY: -10,
                     itemsSpacing: 0,
                     itemDirection: "left-to-right",
-                    itemWidth: 100,
+                    itemWidth: 100, 
                     itemHeight: 20,
                     itemOpacity: 0.75,
                     symbolSize: 12,
