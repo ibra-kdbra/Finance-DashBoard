@@ -22,7 +22,9 @@ const Predictions = () => {
   const { data: kpiData } = useGetKpisQuery();
 
   const formattedData = useMemo(() => {
-    if (!kpiData) return [];
+    if (!kpiData || kpiData.length === 0 || !kpiData[0].monthlyData || kpiData[0].monthlyData.length === 0) {
+      return { data: [], r2: 0, regressionLine: null as any };
+    }
     const monthlyData = kpiData[0].monthlyData;
     const dataPoints: Array<DataPoint> = monthlyData.map(
       ({ revenue }, i: number) => [i, Number(revenue)]
@@ -86,13 +88,13 @@ const Predictions = () => {
     let diff;
     if (anchorMode === "actual") {
       const actuals = formattedData.data.filter((d: any) => d["Actual Revenue"] !== null);
-      const lastActual = actuals[actuals.length - 1]["Actual Revenue"];
-      const futureProjPeak = forecasts[forecasts.length - 1]["Predicted Revenue"];
+      const lastActual = actuals[actuals.length - 1]["Actual Revenue"] as number;
+      const futureProjPeak = forecasts[forecasts.length - 1]["Predicted Revenue"] as number;
       diff = ((futureProjPeak - lastActual) / Math.abs(lastActual)) * 100;
     } else {
       const actuals = formattedData.data.filter((d: any) => d["Actual Revenue"] !== null);
-      const currentTrendValue = formattedData.regressionLine.points[actuals.length - 1][1];
-      const futurePeak = forecasts[forecasts.length - 1]["Predicted Revenue"];
+      const currentTrendValue = formattedData.regressionLine.points[actuals.length - 1][1] as number;
+      const futurePeak = forecasts[forecasts.length - 1]["Predicted Revenue"] as number;
       diff = ((futurePeak - currentTrendValue) / Math.abs(currentTrendValue)) * 100;
     }
     
@@ -257,7 +259,6 @@ const Predictions = () => {
                 enableGridX={false}
                 colors={{ datum: "color" }}
                 lineWidth={4}
-                curve="monotoneX"
                 pointSize={8}
                 pointColor={{ theme: "background" }}
                 pointBorderWidth={2}

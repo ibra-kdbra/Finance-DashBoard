@@ -18,11 +18,11 @@ const Row2 = ({ onExpand }: Props) => {
         gridArea="d"
         onDoubleClick={() =>
           onExpand("Operational vs Non-Operational Expenses", "Expense breakdown comparison",
-            <OperationalExpensesLine data={operationalExpenses} gridArea="" />)
+            <OperationalExpensesLine data={operationalExpenses || []} gridArea="" />)
         }
         sx={{ cursor: "pointer", "&:hover": { outline: "1px dashed rgba(129,140,248,0.2)", outlineOffset: "-2px", borderRadius: "1.5rem" } }}
       >
-        <OperationalExpensesLine data={operationalExpenses} gridArea="d" />
+        <OperationalExpensesLine data={operationalExpenses || []} gridArea="d" />
       </Box>
       <Box
         gridArea="e"
@@ -38,11 +38,11 @@ const Row2 = ({ onExpand }: Props) => {
         gridArea="f"
         onDoubleClick={() =>
           onExpand("Product Prices vs Expenses", "Scatter plot analysis",
-            <PriceExpenseScatter data={productExpenseData} gridArea="" />)
+            <PriceExpenseScatter data={productExpenseData || []} gridArea="" />)
         }
         sx={{ cursor: "pointer", "&:hover": { outline: "1px dashed rgba(129,140,248,0.2)", outlineOffset: "-2px", borderRadius: "1.5rem" } }}
       >
-        <PriceExpenseScatter data={productExpenseData} gridArea="f" />
+        <PriceExpenseScatter data={productExpenseData || []} gridArea="f" />
       </Box>
     </>
   );

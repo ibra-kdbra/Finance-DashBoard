@@ -14,6 +14,7 @@ export default defineConfig({
     ],
   },
   build: {
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
         manualChunks: (id) => {
@@ -21,7 +22,7 @@ export default defineConfig({
             if (id.includes("@mui") || id.includes("@emotion")) {
               return "vendor_mui";
             }
-            if (id.includes("recharts") || id.includes("d3")) {
+            if (id.includes("recharts") || id.includes("d3") || id.includes("@nivo") || id.includes("react-spring")) {
               return "vendor_charts";
             }
             if (id.includes("framer-motion")) {

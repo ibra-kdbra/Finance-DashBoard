@@ -19,6 +19,13 @@ export const api = createApi({
   reducerPath: "main",
   tagTypes: ["Kpis", "Products", "Transactions"],
   endpoints: (build) => ({
+    sendMessage: build.mutation<{ reply: string }, { messages: { role: string; content: string }[] }>({
+      query: (body) => ({
+        url: "ai/chat",
+        method: "POST",
+        body,
+      }),
+    }),
     login: build.mutation<any, any>({
       query: (credentials) => ({
         url: "auth/login",
@@ -40,6 +47,28 @@ export const api = createApi({
         body: formData,
       }),
     }),
+    syncStripe: build.mutation<any, void>({
+      query: () => ({
+        url: "integration/stripe/sync",
+        method: "POST",
+      }),
+      invalidatesTags: ["Kpis", "Products", "Transactions"],
+    }),
+    syncMock: build.mutation<any, void>({
+      query: () => ({
+        url: "integration/mock",
+        method: "POST",
+      }),
+      invalidatesTags: ["Kpis", "Products", "Transactions"],
+    }),
+    appendManualData: build.mutation<any, { month: string, revenue: number, expenses: number }>({
+      query: (body) => ({
+        url: "integration/manual",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["Kpis"],
+    }),
     getKpis: build.query<Array<GetKpisResponse>, void>({
       query: () => "kpi/kpis/",
       providesTags: ["Kpis"],
@@ -59,6 +88,10 @@ export const {
   useLoginMutation,
   useSignupMutation,
   useUploadCSVMutation,
+  useSyncStripeMutation,
+  useSyncMockMutation,
+  useAppendManualDataMutation,
+  useSendMessageMutation,
   useGetKpisQuery,
   useGetProductsQuery,
   useGetTransactionsQuery,

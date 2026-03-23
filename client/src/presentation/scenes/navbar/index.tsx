@@ -9,6 +9,7 @@ import SmartToyIcon from "@mui/icons-material/SmartToy";
 import LogoutIcon from "@mui/icons-material/Logout";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import DataImportModal from "@/presentation/components/DataImportModal";
+import AuraPanel from "@/presentation/components/AuraPanel";
 
 
 
@@ -17,6 +18,7 @@ const Navbar = () => {
   const dispatch = useDispatch();
   const [selected, setSelected] = useState("dashboard");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAuraOpen, setIsAuraOpen] = useState(false);
   const isAuth = Boolean(useSelector((state: any) => state.auth.token));
   return (
     <FlexBetween
@@ -110,21 +112,28 @@ const Navbar = () => {
 
             <Divider orientation="vertical" flexItem sx={{ borderColor: palette.grey[800], mx: "0.25rem" }} />
 
-            <Box sx={{ 
-              display: "flex",
-              alignItems: "center",
-              gap: "0.5rem",
-              background: "rgba(129, 138, 248, 0.1)",
-              p: "0.4rem 1rem",
-              borderRadius: "2rem",
-              border: `1px solid rgba(129, 138, 248, 0.2)`,
-              transition: "all 0.3s ease",
-              cursor: "pointer",
-              "&:hover": { 
-                background: "rgba(129, 138, 248, 0.2)",
-                boxShadow: `0 0 15px rgba(129, 138, 248, 0.3)`
-              }
-            }}>
+            <Box
+              onClick={() => setIsAuraOpen(true)}
+              sx={{ 
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+                background: isAuraOpen
+                  ? "rgba(129, 138, 248, 0.2)"
+                  : "rgba(129, 138, 248, 0.1)",
+                p: "0.4rem 1rem",
+                borderRadius: "2rem",
+                border: `1px solid ${isAuraOpen ? "rgba(129, 138, 248, 0.5)" : "rgba(129, 138, 248, 0.2)"}`,
+                transition: "all 0.3s ease",
+                cursor: "pointer",
+                boxShadow: isAuraOpen
+                  ? "0 0 15px rgba(129, 138, 248, 0.35), 0 0 30px rgba(26, 255, 214, 0.1)"
+                  : "none",
+                "&:hover": { 
+                  background: "rgba(129, 138, 248, 0.2)",
+                  boxShadow: `0 0 15px rgba(129, 138, 248, 0.3)`
+                }
+              }}>
               <SmartToyIcon sx={{ fontSize: "18px", color: (palette as any).primary[500] }} />
               <Typography variant="h6" color={(palette as any).primary[500]} fontWeight="700">
                 AURA AI
@@ -153,8 +162,10 @@ const Navbar = () => {
         )}
       </FlexBetween>
       <DataImportModal open={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <AuraPanel open={isAuraOpen} onClose={() => setIsAuraOpen(false)} />
     </FlexBetween>
   );
 };
 
 export default Navbar;
+

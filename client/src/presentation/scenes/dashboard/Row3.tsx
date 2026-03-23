@@ -19,31 +19,31 @@ const Row3 = ({ onExpand }: Props) => {
         gridArea="g"
         onDoubleClick={() =>
           onExpand("Product Catalog", "Full product listing",
-            <ProductListGrid data={productData} gridArea="" />)
+            <ProductListGrid data={productData || []} gridArea="" />)
         }
         sx={{ cursor: "pointer", "&:hover": { outline: "1px dashed rgba(129,140,248,0.2)", outlineOffset: "-2px", borderRadius: "1.5rem" } }}
       >
-        <ProductListGrid data={productData} gridArea="g" />
+        <ProductListGrid data={productData || []} gridArea="g" />
       </Box>
       <Box
         gridArea="h"
         onDoubleClick={() =>
           onExpand("Recent Orders", "Transaction history",
-            <RecentOrdersGrid data={transactionData} gridArea="" />)
+            <RecentOrdersGrid data={transactionData || []} gridArea="" />)
         }
         sx={{ cursor: "pointer", "&:hover": { outline: "1px dashed rgba(129,140,248,0.2)", outlineOffset: "-2px", borderRadius: "1.5rem" } }}
       >
-        <RecentOrdersGrid data={transactionData} gridArea="h" />
+        <RecentOrdersGrid data={transactionData || []} gridArea="h" />
       </Box>
       <Box
         gridArea="i"
         onDoubleClick={() =>
           onExpand("Expense Breakdown By Category", "Category distribution",
-            <ExpenseBreakdownPies data={pieChartData} gridArea="" />)
+            <ExpenseBreakdownPies data={pieChartData || []} gridArea="" />)
         }
         sx={{ cursor: "pointer", "&:hover": { outline: "1px dashed rgba(129,140,248,0.2)", outlineOffset: "-2px", borderRadius: "1.5rem" } }}
       >
-        <ExpenseBreakdownPies data={pieChartData} gridArea="i" />
+        <ExpenseBreakdownPies data={pieChartData || []} gridArea="i" />
       </Box>
       <Box
         gridArea="j"

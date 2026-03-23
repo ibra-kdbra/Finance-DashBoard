@@ -18,31 +18,31 @@ const Row1 = ({ onExpand }: Props) => {
         gridArea="a"
         onDoubleClick={() =>
           onExpand("Revenue and Expenses", "Top line: revenue, bottom line: expenses",
-            <RevenueExpensesArea data={revenueExpenses} gridArea="" />)
+            <RevenueExpensesArea data={revenueExpenses || []} gridArea="" />)
         }
         sx={{ cursor: "pointer", "&:hover": { outline: "1px dashed rgba(129,140,248,0.2)", outlineOffset: "-2px", borderRadius: "1.5rem" } }}
       >
-        <RevenueExpensesArea data={revenueExpenses} gridArea="a" />
+        <RevenueExpensesArea data={revenueExpenses || []} gridArea="a" />
       </Box>
       <Box
         gridArea="b"
         onDoubleClick={() =>
           onExpand("Profit and Revenue", "Top line: revenue, bottom line: profit",
-            <ProfitRevenueLine data={revenueProfit} gridArea="" />)
+            <ProfitRevenueLine data={revenueProfit || []} gridArea="" />)
         }
         sx={{ cursor: "pointer", "&:hover": { outline: "1px dashed rgba(129,140,248,0.2)", outlineOffset: "-2px", borderRadius: "1.5rem" } }}
       >
-        <ProfitRevenueLine data={revenueProfit} gridArea="b" />
+        <ProfitRevenueLine data={revenueProfit || []} gridArea="b" />
       </Box>
       <Box
         gridArea="c"
         onDoubleClick={() =>
           onExpand("Revenue Month by Month", "Monthly revenue breakdown",
-            <MonthlyRevenueBar data={monthlyRevenue} gridArea="" />)
+            <MonthlyRevenueBar data={monthlyRevenue || []} gridArea="" />)
         }
         sx={{ cursor: "pointer", "&:hover": { outline: "1px dashed rgba(129,140,248,0.2)", outlineOffset: "-2px", borderRadius: "1.5rem" } }}
       >
-        <MonthlyRevenueBar data={monthlyRevenue} gridArea="c" />
+        <MonthlyRevenueBar data={monthlyRevenue || []} gridArea="c" />
       </Box>
     </>
   );
