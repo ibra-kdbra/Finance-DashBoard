@@ -8,12 +8,15 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  username  String   @unique
-  email     String   @unique
-  password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String        @id @default(uuid())
+  username     String        @unique
+  email        String        @unique
+  password     String
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  kpis         KPI[]
+  products     Product[]
+  transactions Transaction[]
 }
 
 model Product {
@@ -22,6 +25,8 @@ model Product {
   expense      Decimal       @db.Decimal(10, 2)
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
+  userId       String
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions Transaction[] @relation("ProductTransactions")
 }
 
@@ -31,6 +36,8 @@ model Transaction {
   amount    Decimal   @db.Decimal(10, 2)
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   products  Product[] @relation("ProductTransactions")
 }
 
@@ -42,6 +49,8 @@ model KPI {
   expensesByCategory Json
   createdAt          DateTime    @default(now())
   updatedAt          DateTime    @updatedAt
+  userId             String
+  user               User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   dailyData          DayData[]
   monthlyData        MonthData[]
 }
