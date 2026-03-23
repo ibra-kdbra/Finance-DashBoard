@@ -26,6 +26,13 @@ export const api = createApi({
         body,
       }),
     }),
+    predictAnalysis: build.mutation<{ analysis: string }, { historicalData: any[]; projectedData: any[]; modelType: string }>({
+      query: (body) => ({
+        url: "ai/predict-analysis",
+        method: "POST",
+        body,
+      }),
+    }),
     login: build.mutation<any, any>({
       query: (credentials) => ({
         url: "auth/login",
@@ -92,6 +99,7 @@ export const {
   useSyncMockMutation,
   useAppendManualDataMutation,
   useSendMessageMutation,
+  usePredictAnalysisMutation,
   useGetKpisQuery,
   useGetProductsQuery,
   useGetTransactionsQuery,

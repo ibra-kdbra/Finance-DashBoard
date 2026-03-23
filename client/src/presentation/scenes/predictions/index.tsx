@@ -12,14 +12,21 @@ import { motion } from "framer-motion";
 import AutoGraphIcon from "@mui/icons-material/AutoGraph";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
-import { MenuItem, Select } from "@mui/material";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import { MenuItem, Select, CircularProgress } from "@mui/material";
+import { usePredictAnalysisMutation } from "@/data/api/api";
 
 const Predictions = () => {
   const { palette } = useTheme();
   const [isPredictions, setIsPredictions] = useState(false);
   const [modelType, setModelType] = useState<"linear" | "exponential" | "polynomial">("linear");
+  const [engineSource, setEngineSource] = useState<"math" | "ai">("math");
   const [anchorMode, setAnchorMode] = useState<"trendline" | "actual">("actual");
+  const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
+  const [aiForecastNumbers, setAiForecastNumbers] = useState<number[] | null>(null);
+  
   const { data: kpiData } = useGetKpisQuery();
+  const [getAiAnalysis, { isLoading: isAiLoading }] = usePredictAnalysisMutation();
 
   const formattedData = useMemo(() => {
     if (!kpiData || kpiData.length === 0 || !kpiData[0].monthlyData || kpiData[0].monthlyData.length === 0) {
@@ -45,7 +52,7 @@ const Predictions = () => {
     const actualData = monthlyData.map(({ month, revenue }, i: number) => {
       const isLast = i === monthlyData.length - 1;
       return {
-        name: month.substring(0, 3),
+        name: `${month.substring(0, 3)} '23`, // Assuming 2023 for labels
         "Actual Revenue": Number(revenue),
         "Regression Line": regressionLine.points[i][1],
         "Predicted Revenue": isLast ? (anchorMode === "actual" ? Number(revenue) : regressionLine.points[i][1]) : null,
@@ -70,15 +77,47 @@ const Predictions = () => {
       }
 
       return {
-        name: futureMonths[monthIndex],
+        name: `${futureMonths[monthIndex]} '24`,
         "Actual Revenue": null,
         "Regression Line": null,
         "Predicted Revenue": finalPrediction > 0 ? finalPrediction : 0,
       };
     });
 
-    return { data: [...actualData, ...futureData], r2: regressionLine.r2, regressionLine };
-  }, [kpiData, modelType, anchorMode]);
+    // AI Engine Data Substitution
+    let finalForecastData = [...actualData, ...futureData];
+    if (engineSource === "ai" && aiForecastNumbers) {
+      const actualCount = actualData.length;
+      const lastActualRevenue = Number(monthlyData[actualCount - 1].revenue);
+      
+      // Calculate the initial gap between the last actual and the first AI prediction
+      // We use this to "reattach" the AI curve to the actuals for a professional look.
+      const initialAiVal = aiForecastNumbers[0];
+      const shiftOffset = lastActualRevenue - initialAiVal;
+
+      finalForecastData = [
+        ...actualData,
+        ...aiForecastNumbers.map((val, i) => {
+          let adjustedVal = val;
+          if (anchorMode === "actual") {
+            // Smoothly decay the shift offset so the AI curve eventually returns 
+            // to its natural neural trajectory over 4-5 months
+            const decayFactor = Math.pow(0.5, i);
+            adjustedVal = val + (shiftOffset * decayFactor);
+          }
+
+          return {
+            name: `${futureMonths[(actualCount + i) % 12]} '24`,
+            "Actual Revenue": null,
+            "Regression Line": null,
+            "Predicted Revenue": adjustedVal > 0 ? adjustedVal : 0,
+          };
+        })
+      ];
+    }
+
+    return { data: finalForecastData, r2: regressionLine.r2, regressionLine };
+  }, [kpiData, modelType, anchorMode, engineSource, aiForecastNumbers]);
 
   const insights = useMemo(() => {
     if (!formattedData.data?.length) return null;
@@ -110,9 +149,33 @@ const Predictions = () => {
       rawValue: diff,
       confidence: `${(formattedData.r2 * 100).toFixed(0)}% Accuracy`,
       r2: formattedData.r2,
-      description: `Mathematical extrapolation applied: ${modelDescriptions[modelType]} Assuming a persistence of vector momentum, the regression path calculates a ${diff > 0 ? "positive structural shift" : "negative structural correction"} spanning the 9-month horizon.`
+      description: aiAnalysis || `Mathematical extrapolation applied: ${modelDescriptions[modelType]} Assuming a persistence of vector momentum, the regression path calculates a ${diff > 0 ? "positive structural shift" : "negative structural correction"} spanning the 9-month horizon.`
     };
-  }, [formattedData, modelType, anchorMode]);
+  }, [formattedData, modelType, anchorMode, aiAnalysis]);
+
+  const handleInitializeEngine = async () => {
+    const nextState = !isPredictions;
+    setIsPredictions(nextState);
+
+    if (nextState && !aiAnalysis) {
+      try {
+        const actuals = formattedData.data.filter(d => d["Actual Revenue"] !== null);
+        
+        const res = await getAiAnalysis({
+          historicalData: actuals,
+          modelType
+        }).unwrap();
+        
+        setAiAnalysis(res.analysis);
+        if (res.aiPredictions) {
+          setAiForecastNumbers(res.aiPredictions);
+          setEngineSource("ai");
+        }
+      } catch (err) {
+        console.error("Failed to fetch AI insights:", err);
+      }
+    }
+  };
 
   return (
     <Box width="100%" height="100%" p="1.5rem" className="app-container">
@@ -150,6 +213,20 @@ const Predictions = () => {
                 <MenuItem value="trendline">Math: Trendline Anchor</MenuItem>
               </Select>
               <Select
+                value={engineSource}
+                onChange={(e) => setEngineSource(e.target.value as any)}
+                displayEmpty
+                sx={{
+                  bgcolor: "rgba(255,255,255,0.03)",
+                  borderRadius: "0.5rem",
+                  "& .MuiSelect-select": { py: "0.75rem", px: "1.5rem", fontWeight: 600, color: engineSource === "ai" ? (palette as any).secondary[400] : "inherit" },
+                  "& .MuiOutlinedInput-notchedOutline": { borderColor: palette.grey[800] }
+                }}
+              >
+                <MenuItem value="math">Engine: Mathematical</MenuItem>
+                <MenuItem value="ai" disabled={!aiForecastNumbers}>Engine: AI Neural (Chronos)</MenuItem>
+              </Select>
+              <Select
                 value={modelType}
                 onChange={(e) => setModelType(e.target.value as any)}
                 displayEmpty
@@ -165,7 +242,8 @@ const Predictions = () => {
                 <MenuItem value="polynomial">Polynomial Synthesis</MenuItem>
               </Select>
                 <Button
-                onClick={() => setIsPredictions(!isPredictions)}
+                onClick={handleInitializeEngine}
+                disabled={isAiLoading}
                 sx={{
                   background: isPredictions
                     ? `linear-gradient(135deg, ${(palette as any).secondary[500]}, ${(palette as any).primary[400]})`
@@ -200,8 +278,7 @@ const Predictions = () => {
                 }}
               >
                 {isPredictions ? "Disable Simulation" : "Initialize Engine"}
-              </Button>
-            </Box>
+              </Button>            </Box>
           </FlexBetween>
 
           <Divider sx={{ mb: "2rem", borderColor: palette.grey[800] }} />
@@ -257,6 +334,8 @@ const Predictions = () => {
                   format: (v) => `$${v / 1000}k`
                 }}
                 enableGridX={false}
+                enableArea={true}
+                areaOpacity={0.07}
                 colors={{ datum: "color" }}
                 lineWidth={4}
                 pointSize={8}
@@ -264,6 +343,20 @@ const Predictions = () => {
                 pointBorderWidth={2}
                 pointBorderColor={{ from: "serieColor" }}
                 useMesh={true}
+                defs={[
+                  {
+                    id: "dashed",
+                    type: "patternLines",
+                    background: "inherit",
+                    color: "rgba(26, 255, 214, 0.5)",
+                    lineWidth: 2,
+                    spacing: 6,
+                    rotation: -45
+                  }
+                ]}
+                fill={[
+                  { match: { id: "Forecast" }, id: "dashed" }
+                ]}
                 legends={[
                   {
                     anchor: "top-right",
@@ -300,12 +393,24 @@ const Predictions = () => {
 
                 <Box bgcolor={palette.grey[900]} p="1.5rem" borderRadius="1rem" border={`1px solid ${palette.grey[800]}`} flexGrow={1}>
                   <Box display="flex" alignItems="center" gap="0.5rem" mb="1rem">
-                    <InfoOutlinedIcon sx={{ color: (palette as any).primary[500] }} />
-                    <Typography variant="h3">Dynamic Insights</Typography>
+                    {isPredictions ? (
+                      <AutoAwesomeIcon sx={{ color: (palette as any).secondary[500] }} />
+                    ) : (
+                      <InfoOutlinedIcon sx={{ color: (palette as any).primary[500] }} />
+                    )}
+                    <Typography variant="h3">{isPredictions ? "Aura AI Analysis" : "Dynamic Insights"}</Typography>
                   </Box>
-                  <Typography variant="h5" color={palette.grey[300]} lineHeight="1.6">
-                    {insights?.description}
-                  </Typography>
+                  
+                  {isAiLoading ? (
+                    <Box display="flex" justifyContent="center" alignItems="center" height="100px">
+                      <CircularProgress size={30} sx={{ color: (palette as any).secondary[500] }} />
+                    </Box>
+                  ) : (
+                    <Typography variant="h5" color={isPredictions ? palette.grey[100] : palette.grey[300]} lineHeight="1.6">
+                      {insights?.description}
+                    </Typography>
+                  )}
+                  
                   <Box mt="2.5rem">
                     <Typography variant="h5" color={palette.grey[400]} mb="0.75rem">Model Confidence</Typography>
                     <Box height="6px" bgcolor={palette.grey[800]} borderRadius="3px">
