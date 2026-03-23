@@ -1,7 +1,7 @@
+import "dotenv/config";
 import express from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
-import dotenv from "dotenv";
 import helmet from "helmet";
 import morgan from "morgan";
 import kpiRoutes from './src/presentation/routes/kpi.route.js';
@@ -15,7 +15,6 @@ import { verifyToken } from "./src/data/middleware/auth.middleware.js";
 import prisma from "./src/data/prisma.js";
 
 /* CONFIGURATIONS */
-dotenv.config();
 const app = express();
 app.use(express.json());
 app.use(helmet());
@@ -33,6 +32,17 @@ app.use("/transaction", verifyToken, transactionRoutes);
 app.use("/ingest", verifyToken, ingestionRoutes);
 app.use("/integration", verifyToken, integrationRoutes);
 app.use("/ai", verifyToken, aiRoutes);
+
+/* HEALTH CHECK */
+app.get("/ping", (req, res) => {
+  res.status(200).send("pong");
+});
+
+/* 404 HANDLER FOR DEBUGGING */
+app.use((req, res) => {
+  console.log(`404 Not Found: ${req.method} ${req.url}`);
+  res.status(404).send(`Cannot ${req.method} ${req.url}`);
+});
 
 /* PRISMA SETUP */
 const PORT = process.env.PORT || 1337;
