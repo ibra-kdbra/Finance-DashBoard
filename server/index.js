@@ -9,6 +9,8 @@ import productRoutes from './src/presentation/routes/product.route.js';
 import transactionRoutes from './src/presentation/routes/transaction.route.js';
 import authRoutes from "./src/presentation/routes/auth.route.js";
 import ingestionRoutes from "./src/presentation/routes/ingestion.route.js";
+import integrationRoutes from "./src/presentation/routes/integration.route.js";
+import aiRoutes from "./src/presentation/routes/ai.route.js";
 import { verifyToken } from "./src/data/middleware/auth.middleware.js";
 import prisma from "./src/data/prisma.js";
 
@@ -28,7 +30,9 @@ app.use("/auth", authRoutes);
 app.use("/kpi", verifyToken, kpiRoutes);
 app.use("/product", verifyToken, productRoutes);
 app.use("/transaction", verifyToken, transactionRoutes);
-app.use("/ingest", ingestionRoutes);
+app.use("/ingest", verifyToken, ingestionRoutes);
+app.use("/integration", verifyToken, integrationRoutes);
+app.use("/ai", verifyToken, aiRoutes);
 
 /* PRISMA SETUP */
 const PORT = process.env.PORT || 1337;
