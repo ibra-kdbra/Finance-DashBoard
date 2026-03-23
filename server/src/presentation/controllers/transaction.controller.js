@@ -3,6 +3,7 @@ import prisma from "../../data/prisma.js";
 export const getTransactions = async (req, res) => {
     try {
         const transactions = await prisma.transaction.findMany({
+            where: { userId: req.user.id },
             take: 50,
             orderBy: {
                 createdAt: "desc",

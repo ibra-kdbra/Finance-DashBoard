@@ -12,6 +12,7 @@ const cleanCurrency = (val) => {
 export const ingestCSV = async (req, res) => {
     try {
         const { type } = req.body;
+        const userId = req.user.id;
         const results = [];
         const filePath = req.file.path;
 
@@ -21,25 +22,60 @@ export const ingestCSV = async (req, res) => {
             .on("end", async () => {
                 try {
                     if (type === "kpi") {
-                        for (const row of results) {
-                            await prisma.kPI.create({
+                        // Assuming CSV has a single row of totals and a JSON expensesByCategory.
+                        // For a real CSV containing 12 rows of months, we aggregate it first.
+                        await prisma.$transaction(async (tx) => {
+                            // 1. Wipe old CSV KPI data for user
+                            await tx.monthData.deleteMany({ where: { kpi: { userId } } });
+                            await tx.dayData.deleteMany({ where: { kpi: { userId } } });
+                            await tx.kPI.deleteMany({ where: { userId } });
+
+                            // 2. Aggregate the CSV if it's multiple rows of monthly data
+                            let totalRev = 0;
+                            let totalExp = 0;
+
+                            for (const row of results) {
+                                totalRev += cleanCurrency(row.revenue);
+                                totalExp += cleanCurrency(row.expenses);
+                            }
+
+                            // 3. Create the Main KPI record
+                            const kpi = await tx.kPI.create({
                                 data: {
-                                    totalProfit: cleanCurrency(row.totalProfit),
-                                    totalRevenue: cleanCurrency(row.totalRevenue),
-                                    totalExpenses: cleanCurrency(row.totalExpenses),
-                                    expensesByCategory: row.expensesByCategory ? JSON.parse(row.expensesByCategory) : {},
-                                    // Relational nested data would be handled here if available in CSV
+                                    userId,
+                                    totalRevenue: totalRev,
+                                    totalExpenses: totalExp,
+                                    totalProfit: totalRev - totalExp,
+                                    expensesByCategory: results[0].expensesByCategory ? JSON.parse(results[0].expensesByCategory) : {},
                                 },
                             });
-                        }
+
+                            // 4. Create the nested monthly items
+                            const monthPromises = results.map((row) => {
+                                return tx.monthData.create({
+                                    data: {
+                                        kpiId: kpi.id,
+                                        month: row.month,
+                                        revenue: cleanCurrency(row.revenue),
+                                        expenses: cleanCurrency(row.expenses),
+                                        operationalExpenses: cleanCurrency(row.operationalExpenses) || cleanCurrency(row.expenses) * 0.7,
+                                        nonOperationalExpenses: cleanCurrency(row.nonOperationalExpenses) || cleanCurrency(row.expenses) * 0.3,
+                                    }
+                                });
+                            });
+
+                            await Promise.all(monthPromises);
+                        });
                     } else if (type === "product") {
                         const data = results.map((row) => ({
+                            userId,
                             price: cleanCurrency(row.price),
                             expense: cleanCurrency(row.expense),
                         }));
                         await prisma.product.createMany({ data });
                     } else if (type === "transaction") {
                         const data = results.map((row) => ({
+                            userId,
                             buyer: row.buyer,
                             amount: cleanCurrency(row.amount),
                         }));

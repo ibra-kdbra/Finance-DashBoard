@@ -3,6 +3,7 @@ import prisma from "../../data/prisma.js";
 export const getProducts = async (req, res) => {
     try {
         const products = await prisma.product.findMany({
+            where: { userId: req.user.id },
             include: {
                 transactions: true,
             }
