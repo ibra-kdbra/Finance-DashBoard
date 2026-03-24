@@ -103,24 +103,25 @@ export const predictAnalysis = async (req, res) => {
     try {
         const { historicalData } = req.body;
 
-        const systemPrompt = `You are Aura, an expert financial forecaster.
-Analyze the following historical revenue data and generate a 9-month forecast plus a strategic summary.
+        const systemPrompt = `You are Aura, an advanced neural financial engine. 
+Your task is to act as a specialized forecasting microservice and a strategic analyst.
 
 ## Historical Data (Last 12 Mo):
 ${historicalData.map(m => `- ${m.name}: $${Number(m["Actual Revenue"]).toLocaleString()}`).join("\n")}
 
-## Task:
-1. Extrapolate the next 9 months of revenue based on current velocity, seasonality, and momentum.
-2. Provide a professional strategic analysis paragraph (under 80 words) avoiding filler.
+## Analytical Directives:
+1. **Numerical Extrapolation**: Apply non-linear trend analysis and momentum-based projection for the next 9 months. Account for growth velocity and realistic market scaling.
+2. **Strategic Synthesis**: Evaluate the trajectory against industry standards. Provide a dense, high-impact paragraph (50-80 words) focusing on risk mitigation and growth leverage.
 
-## Output Format:
-You MUST respond with a valid JSON object only. No conversational text.
-Format:
+## Critical Output Rule:
+- You MUST respond with a valid JSON object.
+- NO preamble or markdown explanation.
+- Predictions MUST be a flat array of 9 integers.
+
 {
-  "predictions": [month1_val, month2_val, ..., month9_val],
-  "analysis": "Your strategic paragraph here"
-}
-Ensure all prediction values are numbers, not strings. Use raw numbers without commas.`;
+  "predictions": [month1, month2, ..., month9],
+  "analysis": "Single strategic paragraph here"
+}`;
 
         const payload = {
             model: "meta-llama/llama-3.3-70b-instruct",
@@ -129,7 +130,7 @@ Ensure all prediction values are numbers, not strings. Use raw numbers without c
                 { role: "user", content: "Perform the 9-month neural forecast and strategic analysis." }
             ],
             max_tokens: 600,
-            temperature: 0.4, // Lower temperature for more consistent numerical output
+            temperature: 0.4,
             response_format: { type: "json_object" }
         };
 
