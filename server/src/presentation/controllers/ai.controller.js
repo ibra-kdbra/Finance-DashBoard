@@ -101,62 +101,36 @@ export const chat = async (req, res) => {
 
 export const predictAnalysis = async (req, res) => {
     try {
-        const { historicalData, modelType } = req.body;
-        const FORECASTER_URL = process.env.FORECASTER_URL || "http://localhost:8000";
+        const { historicalData } = req.body;
 
-        // 1. Fetch Numerical Predictions from Python AI Service
-        let projectedNumbers = [];
-        let aiModel = "mathematical-regression";
-        
-        try {
-            const numericValues = historicalData
-                .map(d => Number(d["Actual Revenue"]))
-                .filter(val => typeof val === "number" && !isNaN(val));
-            const forecasterResponse = await fetch(`${FORECASTER_URL}/forecast`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ data: numericValues, prediction_length: 9 })
-            });
+        const systemPrompt = `You are Aura, an expert financial forecaster.
+Analyze the following historical revenue data and generate a 9-month forecast plus a strategic summary.
 
-            if (forecasterResponse.ok) {
-                const forecastData = await forecasterResponse.json();
-                projectedNumbers = forecastData.predictions;
-                aiModel = forecastData.model;
-                console.log(`Successfully fetched AI forecast from ${aiModel}`);
-            } else {
-                console.warn("Python Forecaster returned an error, falling back to basic math.");
-            }
-        } catch (err) {
-            console.warn("Could not connect to Python Forecaster:", err.message);
-        }
-
-        // 2. Prepare Context for LLM Analysis (using the same Llama-3 logic)
-        // We'll use the first 3 projections for the prompt
-        const displayProjections = projectedNumbers.length > 0 
-            ? projectedNumbers.slice(0, 3).map((v, i) => `- Month ${i+1}: $${Math.round(v).toLocaleString()}`).join("\n")
-            : "Data unavailable for granular analysis.";
-
-        const systemPrompt = `You are Aura, an expert AI financial analyst. 
-The user is viewing their Revenue projections based on the ${aiModel} engine.
-
-## Trailing Historical Data:
-${historicalData.slice(-3).map(m => `- ${m.name}: $${Number(m["Actual Revenue"]).toLocaleString()}`).join("\n")}
-
-## AI Projection Summary:
-${displayProjections}
+## Historical Data (Last 12 Mo):
+${historicalData.map(m => `- ${m.name}: $${Number(m["Actual Revenue"]).toLocaleString()}`).join("\n")}
 
 ## Task:
-Generate a single, dense, professional paragraph summarizing the strategic implications of this trajectory.
-Respond ONLY with the analysis. No filler. Under 100 words.`;
+1. Extrapolate the next 9 months of revenue based on current velocity, seasonality, and momentum.
+2. Provide a professional strategic analysis paragraph (under 80 words) avoiding filler.
+
+## Output Format:
+You MUST respond with a valid JSON object only. No conversational text.
+Format:
+{
+  "predictions": [month1_val, month2_val, ..., month9_val],
+  "analysis": "Your strategic paragraph here"
+}
+Ensure all prediction values are numbers, not strings. Use raw numbers without commas.`;
 
         const payload = {
             model: "meta-llama/llama-3.3-70b-instruct",
             messages: [
                 { role: "system", content: systemPrompt },
-                { role: "user", content: "Analyze the regression data and provide the dynamic insights." }
+                { role: "user", content: "Perform the 9-month neural forecast and strategic analysis." }
             ],
-            max_tokens: 300,
-            temperature: 0.7,
+            max_tokens: 600,
+            temperature: 0.4, // Lower temperature for more consistent numerical output
+            response_format: { type: "json_object" }
         };
 
         const hfResponse = await fetch(HF_API_URL, {
@@ -170,17 +144,23 @@ Respond ONLY with the analysis. No filler. Under 100 words.`;
 
         if (!hfResponse.ok) {
             const errText = await hfResponse.text();
-            console.error("HF Predict API Error:", errText);
-            return res.status(502).json({ message: "AI service error", detail: errText });
+            console.error("HF API Error:", errText);
+            return res.status(502).json({ message: "AI service error" });
         }
 
         const data = await hfResponse.json();
-        const analysis = data.choices?.[0]?.message?.content || "Strategic trajectory indicates standard market persistence.";
+        let result;
+        try {
+            result = JSON.parse(data.choices?.[0]?.message?.content);
+        } catch (parseErr) {
+            console.error("AI JSON Parse Error:", data.choices?.[0]?.message?.content);
+            return res.status(500).json({ message: "AI returned invalid format" });
+        }
 
         res.status(200).json({ 
-            analysis,
-            aiPredictions: projectedNumbers,
-            engine: aiModel
+            analysis: result.analysis,
+            aiPredictions: result.predictions,
+            engine: "llama-3-neural"
         });
 
     } catch (error) {
